@@ -51,13 +51,37 @@ async function initDb() {
             password TEXT NOT NULL,
             createdAt TEXT NOT NULL,
             isVerified INTEGER DEFAULT 0,
-            verificationToken TEXT
+            verificationToken TEXT,
+            avatarId TEXT DEFAULT 'avatar_01',
+            avatarUrl TEXT DEFAULT '',
+            subscriptionStatus TEXT DEFAULT 'none',
+            subscriptionPlan TEXT DEFAULT NULL,
+            subscriptionExpiresAt TEXT DEFAULT NULL,
+            trialStartedAt TEXT DEFAULT NULL,
+            trialEndsAt TEXT DEFAULT NULL,
+            revenueCatUserId TEXT DEFAULT NULL,
+            fcmToken TEXT DEFAULT NULL
           )
         `);
 
         // Safely alter existing users table if columns are missing
-        db.run("ALTER TABLE users ADD COLUMN isVerified INTEGER DEFAULT 0", [], () => {});
-        db.run("ALTER TABLE users ADD COLUMN verificationToken TEXT", [], () => {});
+        const alterColumns = [
+          "isVerified INTEGER DEFAULT 0",
+          "verificationToken TEXT",
+          "avatarId TEXT DEFAULT 'avatar_01'",
+          "avatarUrl TEXT DEFAULT ''",
+          "subscriptionStatus TEXT DEFAULT 'none'",
+          "subscriptionPlan TEXT DEFAULT NULL",
+          "subscriptionExpiresAt TEXT DEFAULT NULL",
+          "trialStartedAt TEXT DEFAULT NULL",
+          "trialEndsAt TEXT DEFAULT NULL",
+          "revenueCatUserId TEXT DEFAULT NULL",
+          "fcmToken TEXT DEFAULT NULL"
+        ];
+
+        for (const col of alterColumns) {
+          db.run(`ALTER TABLE users ADD COLUMN ${col}`, [], () => {});
+        }
 
         db.run(`
           CREATE TABLE IF NOT EXISTS payments (
@@ -80,9 +104,22 @@ async function initDb() {
             message TEXT NOT NULL,
             type TEXT NOT NULL,
             sentTo TEXT NOT NULL,
-            createdAt TEXT NOT NULL
+            createdAt TEXT NOT NULL,
+            read INTEGER DEFAULT 0,
+            status TEXT DEFAULT NULL,
+            metadata TEXT DEFAULT NULL
           )
         `);
+
+        // Safely alter existing notifications table
+        const alterNotificationColumns = [
+          "read INTEGER DEFAULT 0",
+          "status TEXT DEFAULT NULL",
+          "metadata TEXT DEFAULT NULL"
+        ];
+        for (const col of alterNotificationColumns) {
+          db.run(`ALTER TABLE notifications ADD COLUMN ${col}`, [], () => {});
+        }
 
         db.run(`
           CREATE TABLE IF NOT EXISTS catalogs (
@@ -92,6 +129,115 @@ async function initDb() {
             thumbnailVertical TEXT NOT NULL,
             thumbnailHorizontal TEXT NOT NULL,
             createdAt TEXT NOT NULL
+          )
+        `);
+
+        // NEW TABLES FOR BIBLE BACKEND REQUIREMENTS
+        db.run(`
+          CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            subtitle TEXT,
+            count INTEGER DEFAULT 0,
+            image TEXT NOT NULL,
+            type TEXT NOT NULL,
+            orderIndex INTEGER DEFAULT 0,
+            isPublished INTEGER DEFAULT 1,
+            createdAt TEXT NOT NULL
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS stories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            slug TEXT UNIQUE NOT NULL,
+            type TEXT NOT NULL,
+            categoryId INTEGER,
+            duration TEXT,
+            durationSeconds INTEGER,
+            image TEXT NOT NULL,
+            contentText TEXT,
+            audioUrl TEXT,
+            isLocked INTEGER DEFAULT 0,
+            isPublished INTEGER DEFAULT 0,
+            orderIndex INTEGER DEFAULT 0,
+            createdAt TEXT NOT NULL,
+            FOREIGN KEY (categoryId) REFERENCES categories(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS audio_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            slug TEXT UNIQUE NOT NULL,
+            category TEXT NOT NULL,
+            categoryId INTEGER,
+            duration TEXT,
+            durationSeconds INTEGER,
+            image TEXT NOT NULL,
+            audioUrl TEXT NOT NULL,
+            badgeColor TEXT DEFAULT 'purple',
+            isLocked INTEGER DEFAULT 0,
+            isPublished INTEGER DEFAULT 0,
+            orderIndex INTEGER DEFAULT 0,
+            createdAt TEXT NOT NULL,
+            FOREIGN KEY (categoryId) REFERENCES categories(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS music_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            type TEXT NOT NULL,
+            image TEXT NOT NULL,
+            audioUrl TEXT,
+            createdAt TEXT NOT NULL
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            catColor TEXT NOT NULL,
+            image TEXT NOT NULL,
+            stories TEXT,
+            ages TEXT,
+            pages TEXT,
+            price TEXT,
+            externalUrl TEXT,
+            isAvailable INTEGER DEFAULT 1,
+            orderIndex INTEGER DEFAULT 0,
+            createdAt TEXT NOT NULL
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS favorites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId INTEGER NOT NULL,
+            contentId INTEGER NOT NULL,
+            contentType TEXT NOT NULL,
+            addedAt TEXT NOT NULL,
+            FOREIGN KEY (userId) REFERENCES users(id)
+          )
+        `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS playback_progress (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId INTEGER NOT NULL,
+            contentId INTEGER NOT NULL,
+            contentType TEXT NOT NULL,
+            progressSeconds INTEGER NOT NULL,
+            totalSeconds INTEGER NOT NULL,
+            completed INTEGER DEFAULT 0,
+            lastPlayedAt TEXT NOT NULL,
+            FOREIGN KEY (userId) REFERENCES users(id)
           )
         `);
 
@@ -106,38 +252,18 @@ async function initDb() {
             const user2Hash = await bcrypt.hash('veli123', 10);
             const user3Hash = await bcrypt.hash('ayse123', 10);
             const user4Hash = await bcrypt.hash('ahmet123', 10);
-            const user5Hash = await bcrypt.hash('fatma123', 10);
-            const user6Hash = await bcrypt.hash('mustafa123', 10);
-            const user7Hash = await bcrypt.hash('emine123', 10);
-            const user8Hash = await bcrypt.hash('mehmet123', 10);
-            const user9Hash = await bcrypt.hash('zeynep123', 10);
 
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
+            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified, avatarId, subscriptionStatus) VALUES (?, ?, ?, ?, ?, ?, 1, 'avatar_05', 'active')",
               ['Admin', 'User', 'admin@biblecms.com', '5550000000', adminHash, new Date().toISOString()]);
 
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
+            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified, avatarId, subscriptionStatus) VALUES (?, ?, ?, ?, ?, ?, 1, 'avatar_01', 'active')",
               ['Veli', 'Kaya', 'veli@example.com', '5552345678', user2Hash, new Date().toISOString()]);
 
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
+            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified, avatarId, subscriptionStatus) VALUES (?, ?, ?, ?, ?, ?, 1, 'avatar_02', 'none')",
               ['Ayşe', 'Demir', 'ayse@example.com', '5553456789', user3Hash, new Date().toISOString()]);
 
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
+            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified, avatarId, subscriptionStatus) VALUES (?, ?, ?, ?, ?, ?, 1, 'avatar_03', 'none')",
               ['Ahmet', 'Yılmaz', 'ahmet.yilmaz@example.com', '5554567890', user4Hash, new Date().toISOString()]);
-
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
-              ['Fatma', 'Şahin', 'fatma.sahin@example.com', '5555678901', user5Hash, new Date().toISOString()]);
-
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
-              ['Mustafa', 'Öztürk', 'mustafa.ozturk@example.com', '5556789012', user6Hash, new Date().toISOString()]);
-
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
-              ['Emine', 'Aydın', 'emine.aydin@example.com', '5557890123', user7Hash, new Date().toISOString()]);
-
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
-              ['Mehmet', 'Arslan', 'mehmet.arslan@example.com', '5558901234', user8Hash, new Date().toISOString()]);
-
-            db.run("INSERT INTO users (firstName, lastName, email, phoneNumber, password, createdAt, isVerified) VALUES (?, ?, ?, ?, ?, ?, 1)",
-              ['Zeynep', 'Çelik', 'zeynep.celik@example.com', '5559012345', user9Hash, new Date().toISOString()]);
 
             // Seed Payments
             db.run("INSERT INTO payments (userId, userEmail, productId, amount, currency, status, transactionId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -150,10 +276,10 @@ async function initDb() {
               [3, 'ayse@example.com', 'premium_access_yearly', 49.99, 'USD', 'completed', 'GPA.9942-1284-8263-12847', new Date().toISOString()]);
 
             // Seed Notifications
-            db.run("INSERT INTO notifications (title, message, type, sentTo, createdAt) VALUES (?, ?, ?, ?, ?)",
+            db.run("INSERT INTO notifications (title, message, type, sentTo, createdAt, read, status) VALUES (?, ?, ?, ?, ?, 0, 'pending')",
               ['Welcome to BibleCMS', 'Thank you for downloading and registering in the app.', 'success', 'all', new Date().toISOString()]);
 
-            db.run("INSERT INTO notifications (title, message, type, sentTo, createdAt) VALUES (?, ?, ?, ?, ?)",
+            db.run("INSERT INTO notifications (title, message, type, sentTo, createdAt, read, status) VALUES (?, ?, ?, ?, ?, 0, 'pending')",
               ['Premium Catalog Unlocked', 'Your yearly subscription has successfully activated.', 'info', 'veli@example.com', new Date().toISOString()]);
 
             // Seed Catalogs
@@ -163,6 +289,42 @@ async function initDb() {
             db.run("INSERT INTO catalogs (name, description, thumbnailVertical, thumbnailHorizontal, createdAt) VALUES (?, ?, ?, ?, ?)",
               ['Sample Visual Publication', 'A pre-loaded sample publication showcasing local vertical and horizontal covers.', '/uploads/sample_vertical.jpg', '/uploads/sample_horizontal.jpg', new Date().toISOString()]);
             
+            // Seed Categories
+            db.run("INSERT INTO categories (title, subtitle, count, image, type, orderIndex, isPublished, createdAt) VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+              ['Old Testament', '39 books', 39, 'https://cdn.kidsbiblestories.com/categories/cat-old-testament.jpg', 'story', 1, new Date().toISOString()]);
+            db.run("INSERT INTO categories (title, subtitle, count, image, type, orderIndex, isPublished, createdAt) VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+              ['New Testament', '27 books', 27, 'https://cdn.kidsbiblestories.com/categories/cat-new-testament.jpg', 'story', 2, new Date().toISOString()]);
+            db.run("INSERT INTO categories (title, subtitle, count, image, type, orderIndex, isPublished, createdAt) VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+              ['Old Audio Testament', '32 stories', 32, 'https://cdn.kidsbiblestories.com/categories/cat-old-audio.jpg', 'audio', 3, new Date().toISOString()]);
+            db.run("INSERT INTO categories (title, subtitle, count, image, type, orderIndex, isPublished, createdAt) VALUES (?, ?, ?, ?, ?, ?, 1, ?)",
+              ['Bedtime Stories', '53 stories', 53, 'https://cdn.kidsbiblestories.com/categories/cat-bedtime.jpg', 'story', 4, new Date().toISOString()]);
+
+            // Seed Stories
+            db.run("INSERT INTO stories (title, slug, type, categoryId, duration, durationSeconds, image, contentText, audioUrl, isLocked, isPublished, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['Isaiah', 'isaiah', 'Old Testament', 1, '12 min', 720, 'https://cdn.kidsbiblestories.com/stories/covers/ot-isaiah.jpg', 'This is the story of Isaiah...', 'https://cdn.kidsbiblestories.com/audio/stories/ot-isaiah.mp3', 0, 1, 1, new Date().toISOString()]);
+            db.run("INSERT INTO stories (title, slug, type, categoryId, duration, durationSeconds, image, contentText, audioUrl, isLocked, isPublished, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['Genesis Creation', 'genesis-creation', 'Old Testament', 1, '15 min', 900, 'https://cdn.kidsbiblestories.com/stories/covers/ot-genesis.jpg', 'In the beginning...', 'https://cdn.kidsbiblestories.com/audio/stories/ot-genesis.mp3', 0, 1, 2, new Date().toISOString()]);
+            db.run("INSERT INTO stories (title, slug, type, categoryId, duration, durationSeconds, image, contentText, audioUrl, isLocked, isPublished, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['Noah Ark', 'noah-ark', 'Old Testament', 1, '10 min', 600, 'https://cdn.kidsbiblestories.com/stories/covers/ot-noah.jpg', 'Build an ark...', 'https://cdn.kidsbiblestories.com/audio/stories/ot-noah.mp3', 1, 1, 3, new Date().toISOString()]);
+
+            // Seed Audio Items
+            db.run("INSERT INTO audio_items (title, slug, category, categoryId, duration, durationSeconds, image, audioUrl, badgeColor, isLocked, isPublished, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['2 Chronicles', '2-chronicles', 'Old Audio Testament', 3, '10 min', 600, 'https://cdn.kidsbiblestories.com/audio/covers/ot-2chronicles.jpg', 'https://cdn.kidsbiblestories.com/audio/files/ot-2chronicles.mp3', 'purple', 0, 1, 1, new Date().toISOString()]);
+            db.run("INSERT INTO audio_items (title, slug, category, categoryId, duration, durationSeconds, image, audioUrl, badgeColor, isLocked, isPublished, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['David and Goliath', 'david-goliath-audio', 'Old Audio Testament', 3, '8 min', 480, 'https://cdn.kidsbiblestories.com/audio/covers/ot-david.jpg', 'https://cdn.kidsbiblestories.com/audio/files/ot-david.mp3', 'orange', 1, 1, 2, new Date().toISOString()]);
+
+            // Seed Music Items
+            db.run("INSERT INTO music_items (title, type, image, audioUrl, createdAt) VALUES (?, ?, ?, ?, ?)",
+              ['Hebrew Lullaby', 'Hebrew Biblical Music', 'https://cdn.kidsbiblestories.com/music/covers/hebrew-lullaby.jpg', 'https://cdn.kidsbiblestories.com/music/files/hebrew-lullaby.mp3', new Date().toISOString()]);
+            db.run("INSERT INTO music_items (title, type, image, audioUrl, createdAt) VALUES (?, ?, ?, ?, ?)",
+              ['Joyful Praise', 'Christian Music', 'https://cdn.kidsbiblestories.com/music/covers/joyful-praise.jpg', 'https://cdn.kidsbiblestories.com/music/files/joyful-praise.mp3', new Date().toISOString()]);
+
+            // Seed Products
+            db.run("INSERT INTO products (title, category, catColor, image, stories, ages, pages, price, externalUrl, isAvailable, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['Kids Bible Stories Book', 'Old Testament', '#9747ff', 'https://cdn.kidsbiblestories.com/products/ot-book.jpg', '25+', '3-12', '150', '$12.99', 'https://amazon.com/example-bible-book', 1, 1, new Date().toISOString()]);
+            db.run("INSERT INTO products (title, category, catColor, image, stories, ages, pages, price, externalUrl, isAvailable, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ['New Testament Stories Book', 'New Testament', '#28a745', 'https://cdn.kidsbiblestories.com/products/nt-book.jpg', '20+', '3-12', '120', '$10.99', 'https://amazon.com/example-nt-book', 1, 2, new Date().toISOString()]);
+
             console.log('--- SQLITE DATABASE SEED COMPLETE ---');
           }
           resolve();
