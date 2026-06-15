@@ -16,21 +16,23 @@ class ProductController {
 
   async create(req, res) {
     try {
-      const { title, description, price, priceString, image, duration, durationSeconds, orderIndex, isPublished } = req.body;
+      const { title, description, price, priceString, image, duration, durationSeconds, orderIndex, isPublished, category, catColor, stories, ages, pages, externalUrl, isAvailable } = req.body;
       if (!title || price === undefined || !image) {
         return res.status(400).json({ message: 'Lütfen tüm zorunlu alanları doldurun (title, price, image).' });
       }
 
       const newProduct = await productModel.create({
         title,
-        description,
-        price: parseFloat(price),
-        priceString,
+        category: category || 'Default Category',
+        catColor: catColor || '#9747ff',
         image,
-        duration,
-        durationSeconds,
-        orderIndex,
-        isPublished: isPublished === 'true' || isPublished === 1 || isPublished === true
+        stories: stories || '',
+        ages: ages || '',
+        pages: pages || '',
+        price: parseFloat(price),
+        externalUrl: externalUrl || '',
+        isAvailable: isAvailable === undefined ? true : (isAvailable === 'true' || isAvailable === 1 || isAvailable === true),
+        orderIndex: orderIndex ? parseInt(orderIndex) : 0
       });
 
       res.status(201).json({
@@ -45,17 +47,19 @@ class ProductController {
 
   async update(req, res) {
     try {
-      const { title, description, price, priceString, image, duration, durationSeconds, orderIndex, isPublished } = req.body;
+      const { title, description, price, priceString, image, duration, durationSeconds, orderIndex, isPublished, category, catColor, stories, ages, pages, externalUrl, isAvailable } = req.body;
       const updated = await productModel.update(req.params.id, {
         title,
-        description,
-        price: price !== undefined ? parseFloat(price) : undefined,
-        priceString,
+        category,
+        catColor,
         image,
-        duration,
-        durationSeconds,
-        orderIndex,
-        isPublished: isPublished === undefined ? undefined : (isPublished === 'true' || isPublished === 1 || isPublished === true)
+        stories,
+        ages,
+        pages,
+        price: price !== undefined ? parseFloat(price) : undefined,
+        externalUrl,
+        isAvailable: isAvailable === undefined ? undefined : (isAvailable === 'true' || isAvailable === 1 || isAvailable === true),
+        orderIndex: orderIndex !== undefined ? parseInt(orderIndex) : undefined
       });
 
       if (!updated) {

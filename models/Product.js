@@ -28,14 +28,14 @@ class Product {
         "INSERT INTO products (title, category, catColor, image, stories, ages, pages, price, externalUrl, isAvailable, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           title,
-          category,
+          category || 'Default Category',
           catColor || '#9747ff',
           image,
-          stories,
-          ages,
-          pages,
+          stories || '',
+          ages || '',
+          pages || '',
           price,
-          externalUrl,
+          externalUrl || '',
           isAvailable ? 1 : 0,
           orderIndex ? parseInt(orderIndex) : 0,
           createdAt
@@ -44,14 +44,14 @@ class Product {
       return {
         id: result.lastID,
         title,
-        category,
+        category: category || 'Default Category',
         catColor: catColor || '#9747ff',
         image,
-        stories,
-        ages,
-        pages,
+        stories: stories || '',
+        ages: ages || '',
+        pages: pages || '',
         price,
-        externalUrl,
+        externalUrl: externalUrl || '',
         isAvailable: isAvailable ? 1 : 0,
         orderIndex: orderIndex ? parseInt(orderIndex) : 0,
         createdAt
@@ -59,6 +59,36 @@ class Product {
     } catch (err) {
       console.error(err);
       throw err;
+    }
+  }
+
+  async update(id, updates) {
+    try {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+
+      const merged = { ...existing, ...updates };
+      await db.run(
+        "UPDATE products SET title = ?, category = ?, catColor = ?, image = ?, stories = ?, ages = ?, pages = ?, price = ?, externalUrl = ?, isAvailable = ?, orderIndex = ? WHERE id = ?",
+        [
+          merged.title,
+          merged.category,
+          merged.catColor,
+          merged.image,
+          merged.stories,
+          merged.ages,
+          merged.pages,
+          merged.price,
+          merged.externalUrl,
+          merged.isAvailable ? 1 : 0,
+          merged.orderIndex ? parseInt(merged.orderIndex) : 0,
+          parseInt(id)
+        ]
+      );
+      return await this.findById(id);
+    } catch (err) {
+      console.error(err);
+      return null;
     }
   }
 

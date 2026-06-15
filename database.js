@@ -202,19 +202,43 @@ async function initDb() {
           CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
-            category TEXT NOT NULL,
-            catColor TEXT NOT NULL,
+            category TEXT DEFAULT 'Default Category',
+            catColor TEXT DEFAULT '#9747ff',
             image TEXT NOT NULL,
-            stories TEXT,
-            ages TEXT,
-            pages TEXT,
-            price TEXT,
-            externalUrl TEXT,
+            stories TEXT DEFAULT '',
+            ages TEXT DEFAULT '',
+            pages TEXT DEFAULT '',
+            price REAL DEFAULT 0.0,
+            priceString TEXT DEFAULT '',
+            externalUrl TEXT DEFAULT '',
             isAvailable INTEGER DEFAULT 1,
             orderIndex INTEGER DEFAULT 0,
+            description TEXT DEFAULT '',
+            duration TEXT DEFAULT '',
+            durationSeconds INTEGER DEFAULT 0,
+            isPublished INTEGER DEFAULT 1,
             createdAt TEXT NOT NULL
           )
         `);
+
+        // Safely alter existing products table if columns are missing
+        const alterProductColumns = [
+          "category TEXT DEFAULT 'Default Category'",
+          "catColor TEXT DEFAULT '#9747ff'",
+          "stories TEXT DEFAULT ''",
+          "ages TEXT DEFAULT ''",
+          "pages TEXT DEFAULT ''",
+          "priceString TEXT DEFAULT ''",
+          "externalUrl TEXT DEFAULT ''",
+          "isAvailable INTEGER DEFAULT 1",
+          "description TEXT DEFAULT ''",
+          "duration TEXT DEFAULT ''",
+          "durationSeconds INTEGER DEFAULT 0",
+          "isPublished INTEGER DEFAULT 1"
+        ];
+        for (const col of alterProductColumns) {
+          db.run(`ALTER TABLE products ADD COLUMN ${col}`, [], () => {});
+        }
 
         db.run(`
           CREATE TABLE IF NOT EXISTS favorites (
