@@ -369,11 +369,16 @@ async function initDb() {
             db.run("INSERT INTO products (title, category, catColor, image, stories, ages, pages, price, externalUrl, isAvailable, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               ['David & Goliath Activity & Coloring Book', 'Activity Books', '#e83e8c', 'https://cdn.kidsbiblestories.com/products/coloring-book.jpg', '1', '3-8', '48', '$5.99', 'https://amazon.com/example-coloring-book', 1, 5, new Date().toISOString()]);
             db.run("INSERT INTO products (title, category, catColor, image, stories, ages, pages, price, externalUrl, isAvailable, orderIndex, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              ['Noah\'s Ark 3D Wooden Puzzle', 'Toys', '#ffc107', 'https://cdn.kidsbiblestories.com/products/wooden-puzzle.jpg', '1', '5-10', '35 pcs', '$24.99', 'https://amazon.com/example-wooden-puzzle', 1, 6, new Date().toISOString()]);
-
-            console.log('--- SQLITE DATABASE SEED COMPLETE ---');
+              ['Noah\'s Ark 3D Wooden Puzzle', 'Toys', '#ffc107', 'https://cdn.kidsbiblestories.com/products/wooden-puzzle.jpg', '1', '5-10', '35 pcs', '$24.99', 'https://amazon.com/example-wooden-puzzle', 1, 6, new Date().toISOString()],
+              (err) => {
+                if (err) return reject(err);
+                console.log('--- SQLITE DATABASE SEED COMPLETE ---');
+                resolve();
+              }
+            );
+          } else {
+            resolve();
           }
-          resolve();
         });
       } catch (err) {
         reject(err);
