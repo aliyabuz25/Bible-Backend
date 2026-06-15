@@ -16,6 +16,18 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
   
   <style>
+    /* Round flag design for language selector */
+    .rounded-flag {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
     /* Clean File Upload Previews */
     .preview-box {
       border: 2px dashed #ced4da;
@@ -84,28 +96,31 @@
     <ul class="navbar-nav ml-auto align-items-center">
       <!-- Language Dropdown Menu -->
       <li class="nav-item dropdown">
-        <a class="nav-link font-weight-bold" data-toggle="dropdown" href="#" style="color: #495057;">
-          <i class="fas fa-globe text-info mr-1"></i>
-          <span id="currentLangLabel">Language</span>
+        <a class="nav-link font-weight-bold d-flex align-items-center" data-toggle="dropdown" href="#" style="color: #495057;">
+          <img id="activeLangFlag" class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/us.svg" alt="Flag" style="margin-right: 6px;">
+          <span id="currentLangLabel">EN</span>
         </a>
         <div class="dropdown-menu dropdown-menu-right p-0">
           <a href="#" class="dropdown-item lang-btn py-2 active" data-lang="en">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/us.svg" style="width: 16px; margin-right: 8px;" alt="US Flag"> English
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/us.svg" alt="US Flag"> EN
           </a>
           <a href="#" class="dropdown-item lang-btn py-2" data-lang="tr">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/tr.svg" style="width: 16px; margin-right: 8px;" alt="TR Flag"> Türkçe
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/tr.svg" alt="TR Flag"> TR
           </a>
           <a href="#" class="dropdown-item lang-btn py-2" data-lang="de">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/de.svg" style="width: 16px; margin-right: 8px;" alt="DE Flag"> Deutsch
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/de.svg" alt="DE Flag"> DE
+          </a>
+          <a href="#" class="dropdown-item lang-btn py-2" data-lang="az">
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/az.svg" alt="AZ Flag"> AZ
           </a>
           <a href="#" class="dropdown-item lang-btn py-2" data-lang="es">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/es.svg" style="width: 16px; margin-right: 8px;" alt="ES Flag"> Español
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/es.svg" alt="ES Flag"> ES
           </a>
           <a href="#" class="dropdown-item lang-btn py-2" data-lang="fr">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/fr.svg" style="width: 16px; margin-right: 8px;" alt="FR Flag"> Français
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/fr.svg" alt="FR Flag"> FR
           </a>
           <a href="#" class="dropdown-item lang-btn py-2" data-lang="it">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/it.svg" style="width: 16px; margin-right: 8px;" alt="IT Flag"> Italiano
+            <img class="rounded-flag" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/it.svg" alt="IT Flag"> IT
           </a>
         </div>
       </li>
@@ -905,6 +920,19 @@
     // Toggle active classes on dropdown buttons
     $('.lang-btn').removeClass('active');
     $(`.lang-btn[data-lang="${lang}"]`).addClass('active');
+
+    // Update active flag in topbar
+    const flagUrls = {
+      en: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/us.svg',
+      tr: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/tr.svg',
+      de: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/de.svg',
+      az: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/az.svg',
+      es: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/es.svg',
+      fr: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/fr.svg',
+      it: 'https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/flags/4x3/it.svg'
+    };
+    $('#activeLangFlag').attr('src', flagUrls[lang] || flagUrls.en);
+    $('#currentLangLabel').text(lang.toUpperCase());
 
     if (!locales[lang]) return;
 
